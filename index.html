@@ -157,7 +157,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
     <tbody id="tb"></tbody>
   </table>
 </section>
-<p class="foot">출근·퇴근 시각을 넣으면 휴게시간을 뺀 근무시간이 자동 계산됩니다. 퇴근이 출근보다 이르면 다음 날 퇴근(야간근무)으로 봅니다. 휴게(시:분)를 비워두면 근무시간이 기준(기본 4시간) 이상일 때 기본 휴게시간이 자동으로 빠집니다. 오늘 출근 시각만 넣고 퇴근을 비워두면 월 합계 옆에서 근무시간이 초 단위로 올라갑니다. 출근/퇴근 체크 버튼을 누르면 누른 시각이 오늘 날짜에 바로 기록됩니다. 휴가 칸에서 연차(8시간)·반차(4시간 30분)·반반차(2시간)·공가(8시간)·경조휴가(8시간)를 고르면 그 날의 인정 시간이 자동으로 채워집니다. 인정은 이 값을 포함해 출퇴근 기록 없이 근무로 인정되는 시간이며, 그날 근무시간에 더해집니다. 입력한 내용은 로그인한 본인 계정에 저장되어 다른 기기에서도 볼 수 있습니다. 공휴일(대체공휴일 포함)은 빨간 날짜로 표시되며 평일 채우기에서 빠지고, 주 기준시간도 평일 공휴일 하루당 하루치(기준÷5)만큼 줄어듭니다. 휴일 근무는 주말·공휴일에 입력한 시간의 합계입니다. <span id="hnote"></span></p>
+<p class="foot">출근·퇴근 시각을 넣으면 휴게시간을 뺀 근무시간이 자동 계산됩니다. 퇴근이 출근보다 이르면 다음 날 퇴근(야간근무)으로 봅니다. 휴게(시:분)를 비워두면 근무시간이 기준(기본 4시간) 이상일 때 기본 휴게시간이 자동으로 빠집니다. 오늘 출근 시각만 넣고 퇴근을 비워두면 월 합계 옆에서 근무시간이 초 단위로 올라갑니다. 출근/퇴근 체크 버튼을 누르면 누른 시각이 오늘 날짜에 바로 기록됩니다. 휴가 칸에서 연차(8시간)·반차(4시간 30분)·반반차(2시간)·공가(8시간)·경조휴가(8시간)를 고르면 그 날의 인정 시간이 자동으로 채워집니다. 인정은 이 값을 포함해 출퇴근 기록 없이 근무로 인정되는 시간이며, 그날 근무시간에 더해집니다. 입력한 내용은 로그인한 본인 계정에 저장되어 다른 기기에서도 볼 수 있습니다. 공휴일(대체공휴일 포함)은 빨간 날짜로 표시되며 평일 채우기에서 빠지고, 주 기준시간도 평일 공휴일 하루당 하루치(기준÷5)만큼 줄어듭니다. 휴일 근무는 주말·공휴일에 입력한 시간의 합계입니다. 주간 합계는 달이 바뀌는 주도 월요일~일요일 전체를 합산하고, 월 합계에는 그 달 날짜만 포함됩니다. <span id="hnote"></span></p>
 </div>
 </main>
 
@@ -190,6 +190,7 @@ const HOL={
 const LV={'연차':480,'반차':270,'반반차':120,'공가':480,'경조휴가':480};
 const lvOpts=cur=>['',...Object.keys(LV)].map(v=>`<option value="${v}"${cur===v?' selected':''}>${v||'–'}</option>`).join('');
 
+function wlab(w){const a=w.a,b=w.b;return a.getMonth()===b.getMonth()?`${a.getMonth()+1}/${a.getDate()}–${b.getDate()}`:`${a.getMonth()+1}/${a.getDate()}–${b.getMonth()+1}/${b.getDate()}`;}
 function render(){
   const y=cur.getFullYear(),m=cur.getMonth(),n=new Date(y,m+1,0).getDate();
   $('ttl').textContent=`${y}년 ${m+1}월`;
@@ -197,10 +198,13 @@ function render(){
   const tb=$('tb');tb.innerHTML='';weeks=[];let w=null;
   for(let i=1;i<=n;i++){
     const dow=new Date(y,m,i).getDay(),k=keyOf(y,m,i),r=state.data[k]||{};
-    if(!w||dow===1){w={rows:[],first:i,hd:0};weeks.push(w);}
+    if(!w||dow===1){
+      const o=(dow+6)%7,ks=[];let hd=0;
+      for(let j=0;j<7;j++){const d=new Date(y,m,i-o+j),k2=keyOf(d.getFullYear(),d.getMonth(),d.getDate());ks.push(k2);if(j<5&&HOL[k2])hd++;}
+      w={rows:[],keys:ks,hd,a:new Date(y,m,i-o),b:new Date(y,m,i-o+6)};weeks.push(w);
+    }
     const tr=document.createElement('tr');tr.dataset.k=k;
     const hn=HOL[k],off=dow===0||dow===6||!!hn;
-    if(hn&&dow>0&&dow<6)w.hd++;
     tr.className=(dow===0||dow===6?'we':'')+(hn?' hol':'');
     if(y===now.getFullYear()&&m===now.getMonth()&&i===now.getDate())tr.classList.add('today');
     tr.innerHTML=`<td class="d"><b>${i}</b>${'일월화수목금토'[dow]}${hn?`<small class="hn">${hn}</small>`:''}</td>
@@ -215,10 +219,11 @@ function render(){
     w.rows.push({k,off,td:tr.querySelector('.t')});
     if(dow===0||i===n){
       const s=document.createElement('tr');s.className='wk';
-      s.innerHTML=`<td colspan="6">${m+1}/${w.first}–${i} 주간<span class="note"></span></td><td class="t"></td><td></td>`;
+      s.innerHTML=`<td colspan="6">${wlab(w)} 주간<span class="note"></span></td><td class="t"></td><td></td>`;
       tb.appendChild(s);w.tot=s.querySelector('.t');w.note=s.querySelector('.note');
     }
   }
+  weeks.forEach(w=>{w.ext=w.keys.filter(k=>!w.rows.some(o=>o.k===k));});
   recalc();
 }
 
@@ -232,9 +237,10 @@ function recalc(){
       s+=v;if(v)days++;if(o.off)off+=v;cr+=cred(state.data[o.k]);
     });
     tot+=s;if(s)wn++;
-    w.tot.textContent=s?fmt(s):'–';
-    if(w.rows.length===7&&s&&state.set.target>0){
-      const T=Math.round(state.set.target*60*(1-w.hd/5)),d=s-T;
+    const sw=s+w.ext.reduce((a,k)=>a+mins(state.data[k]),0);
+    w.tot.textContent=sw?fmt(sw):'–';
+    if(sw&&state.set.target>0){
+      const T=Math.round(state.set.target*60*(1-w.hd/5)),d=sw-T;
       w.note.textContent=`기준 ${fmtK(T)}${w.hd?` (공휴일 ${w.hd}일 제외)`:''} ${d>=0?'+':'−'}${fmt(Math.abs(d))}`;
       w.note.className=d>0?'note over':'note';
     }else{w.note.textContent='';w.note.className='note';}
