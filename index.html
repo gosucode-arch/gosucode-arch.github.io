@@ -157,7 +157,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
     <tbody id="tb"></tbody>
   </table>
 </section>
-<p class="foot">출근·퇴근 시각을 넣으면 휴게시간을 뺀 근무시간이 자동 계산됩니다. 퇴근이 출근보다 이르면 다음 날 퇴근(야간근무)으로 봅니다. 휴게(시:분)를 비워두면 근무시간이 기준(기본 4시간) 이상일 때 기본 휴게시간이 자동으로 빠집니다. 오늘 출근 시각만 넣고 퇴근을 비워두면 월 합계 옆에서 근무시간이 초 단위로 올라갑니다. 출근/퇴근 체크 버튼을 누르면 누른 시각이 오늘 날짜에 바로 기록됩니다. 휴가 칸에서 연차(8시간)·반차(4시간 30분)·반반차(2시간)·공가(8시간)·경조휴가(8시간)를 고르면 그 날의 인정 시간이 자동으로 채워집니다. 인정은 이 값을 포함해 출퇴근 기록 없이 근무로 인정되는 시간이며, 그날 근무시간에 더해집니다. 입력한 내용은 로그인한 본인 계정에 저장되어 다른 기기에서도 볼 수 있습니다. 공휴일(대체공휴일 포함)은 빨간 날짜로 표시되며 평일 채우기에서 빠지고, 주 기준시간도 평일 공휴일 하루당 하루치(기준÷5)만큼 줄어듭니다. 휴일 근무는 주말·공휴일에 입력한 시간의 합계입니다. 주간 합계는 달이 바뀌는 주도 월요일~일요일 전체를 합산하고, 월 합계에는 그 달 날짜만 포함됩니다. <span id="hnote"></span></p>
+<p class="foot">출근·퇴근 시각을 넣으면 휴게시간을 뺀 근무시간이 자동 계산됩니다. 퇴근이 출근보다 이르면 다음 날 퇴근(야간근무)으로 봅니다. 휴게(시:분)를 비워두면 근무시간이 기준(기본 4시간) 이상일 때 기본 휴게시간이 자동으로 빠집니다. 오늘 출근 시각만 넣고 퇴근을 비워두면 월 합계 옆에서 근무시간이 초 단위로 올라갑니다. 출근/퇴근 체크 버튼을 누르면 누른 시각이 오늘 날짜에 바로 기록됩니다. 휴가 칸에서 연차(8시간)·반차(4시간 30분)·반반차(2시간)·공가(8시간)·경조휴가(8시간)를 고르면 그 날의 인정 시간이 자동으로 채워집니다. 인정은 이 값을 포함해 출퇴근 기록 없이 근무로 인정되는 시간이며, 그날 근무시간에 더해집니다. 입력한 내용은 로그인한 본인 계정에 저장되어 다른 기기에서도 볼 수 있습니다. 공휴일(대체공휴일 포함)은 빨간 날짜로 표시되며 평일 채우기에서 빠집니다. 평일 공휴일에는 인정 시간이 자동으로 8시간 들어가서(인정 칸에 직접 입력하면 그 값이 우선, 0을 입력하면 인정하지 않음) 주 기준시간을 그만큼 채운 것으로 계산됩니다. 휴일 근무는 주말·공휴일에 입력한 시간의 합계입니다. 주간 합계는 달이 바뀌는 주도 월요일~일요일 전체를 합산하고, 월 합계에는 그 달 날짜만 포함됩니다. <span id="hnote"></span></p>
 </div>
 </main>
 
@@ -176,8 +176,10 @@ function clock(r){
   const b=(r.b===''||r.b==null)?(m>=state.set.after*60?Number(state.set.brk):0):Number(r.b);
   return Math.max(0,m-(b||0));
 }
-function cred(r){const a=Number(r&&r.a);return a>0?a:0;}
-function mins(r){return clock(r)+cred(r);}
+function defCred(k){if(!HOL[k])return 0;const d=new Date(k+'T00:00:00').getDay();return d>0&&d<6?480:0;}
+const expl=r=>(r&&r.a!==''&&r.a!=null)?Math.max(0,Number(r.a)||0):null;
+function cred(r,k){const e=expl(r);return e!==null?e:defCred(k);}
+function mins(r,k){return clock(r)+cred(r,k);}
 const hv=(v,i)=>(v===''||v==null)?'':(i?v%60:Math.floor(v/60));
 const fmt=m=>`${Math.floor(m/60)}:${pad(m%60)}`;
 const fmtK=m=>{const h=Math.floor(m/60),mm=m%60;return mm?`${h}시간 ${mm}분`:`${h}시간`;};
@@ -204,7 +206,7 @@ function render(){
       w={rows:[],keys:ks,hd,a:new Date(y,m,i-o),b:new Date(y,m,i-o+6)};weeks.push(w);
     }
     const tr=document.createElement('tr');tr.dataset.k=k;
-    const hn=HOL[k],off=dow===0||dow===6||!!hn;
+    const hn=HOL[k],off=dow===0||dow===6||!!hn,dc=defCred(k);
     tr.className=(dow===0||dow===6?'we':'')+(hn?' hol':'');
     if(y===now.getFullYear()&&m===now.getMonth()&&i===now.getDate())tr.classList.add('today');
     tr.innerHTML=`<td class="d"><b>${i}</b>${'일월화수목금토'[dow]}${hn?`<small class="hn">${hn}</small>`:''}</td>
@@ -212,7 +214,7 @@ function render(){
 <td><input type="time" data-f="e" value="${r.e||''}" aria-label="${i}일 퇴근"></td>
 <td><div class="du" data-f="b"><input type="number" class="dh" min="0" max="24" placeholder="${Math.floor(state.set.brk/60)}" value="${hv(r.b,0)}" aria-label="${i}일 휴게 시간"><span>:</span><input type="number" class="dm" min="0" max="59" placeholder="${pad(state.set.brk%60)}" value="${hv(r.b,1)}" aria-label="${i}일 휴게 분"></div></td>
 <td><select data-f="lv" aria-label="${i}일 휴가 종류">${lvOpts(r.lv||'')}</select></td>
-<td><div class="du" data-f="a"><input type="number" class="dh" min="0" max="24" placeholder="0" value="${hv(r.a,0)}" aria-label="${i}일 인정 시간"><span>:</span><input type="number" class="dm" min="0" max="59" placeholder="00" value="${hv(r.a,1)}" aria-label="${i}일 인정 분"></div></td>
+<td><div class="du" data-f="a"><input type="number" class="dh" min="0" max="24" placeholder="${Math.floor(dc/60)}" value="${hv(r.a,0)}" aria-label="${i}일 인정 시간"><span>:</span><input type="number" class="dm" min="0" max="59" placeholder="${pad(dc%60)}" value="${hv(r.a,1)}" aria-label="${i}일 인정 분"></div></td>
 <td class="t"></td>
 <td class="x"><button data-clear aria-label="${i}일 지우기">×</button></td>`;
     tb.appendChild(tr);
@@ -232,16 +234,16 @@ function recalc(){
   weeks.forEach(w=>{
     let s=0;
     w.rows.forEach(o=>{
-      const v=mins(state.data[o.k]);
+      const v=mins(state.data[o.k],o.k);
       o.td.textContent=v?fmt(v):'–';o.td.classList.toggle('z',!v);
-      s+=v;if(v)days++;if(o.off)off+=v;cr+=cred(state.data[o.k]);
+      s+=v;if(v)days++;if(o.off)off+=clock(state.data[o.k])+(expl(state.data[o.k])||0);cr+=cred(state.data[o.k],o.k);
     });
     tot+=s;if(s)wn++;
-    const sw=s+w.ext.reduce((a,k)=>a+mins(state.data[k]),0);
+    const sw=s+w.ext.reduce((a,k)=>a+mins(state.data[k],k),0);
     w.tot.textContent=sw?fmt(sw):'–';
     if(sw&&state.set.target>0){
-      const T=Math.round(state.set.target*60*(1-w.hd/5)),d=sw-T;
-      w.note.textContent=`기준 ${fmtK(T)}${w.hd?` (공휴일 ${w.hd}일 제외)`:''} ${d>=0?'+':'−'}${fmt(Math.abs(d))}`;
+      const T=Math.round(state.set.target*60),d=sw-T;
+      w.note.textContent=`기준 ${fmtK(T)}${w.hd?` (공휴일 ${w.hd}일 인정 포함)`:''} ${d>=0?'+':'−'}${fmt(Math.abs(d))}`;
       w.note.className=d>0?'note over':'note';
     }else{w.note.textContent='';w.note.className='note';}
   });
