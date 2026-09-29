@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>근무시간 계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;
+--bg:#e9eef2;--card:#fbfcfd;--ink:#16222e;--mute:#64717e;--line:#d3dbe2;--acc:#1b6b86;--on:#fff;--wk:#dde8ee;--over:#b45309;--we:#f1f4f7;--hol:#c0392b}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#10171d;--card:#182129;--ink:#e6edf3;--mute:#8a98a6;--line:#2a3742;--acc:#5bb4d1;--on:#06222c;--wk:#1f2c36;--over:#f0a04b;--we:#141c23;--hol:#ff8f85}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#10171d;--card:#182129;--ink:#e6edf3;--mute:#8a98a6;--line:#2a3742;--acc:#5bb4d1;--on:#06222c;--wk:#1f2c36;--over:#f0a04b;--we:#141c23;--hol:#ff8f85}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 "Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:720px;margin:0 auto;padding:20px 14px 40px}
+header{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:14px}
+h1{margin:0;font-size:22px;font-weight:900}
+.nav{display:flex;align-items:center;gap:6px}
+#ttl{min-width:96px;text-align:center;font-weight:700;font-size:17px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 12px;min-height:36px}
+button:hover{border-color:var(--acc)}
+button.pri{background:var(--acc);color:var(--on);border-color:var(--acc);font-weight:700}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px}
+.sum{padding:18px 20px;margin-bottom:12px}
+.lab{color:var(--mute);font-size:13px}
+.big{font-size:44px;font-weight:900;line-height:1.15;letter-spacing:-.02em;color:var(--acc)}
+.dec{color:var(--mute);font-size:13px}
+.top{display:flex;flex-wrap:wrap;gap:12px 36px;align-items:flex-end}.live{font-size:34px}
+dl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line)}
+dt{color:var(--mute);font-size:12px}dd{margin:0;font-weight:700;font-size:16px}
+@media(max-width:480px){dl{grid-template-columns:repeat(2,1fr)}}
+details{margin-bottom:12px;padding:0 16px}
+summary{cursor:pointer;padding:12px 0;font-weight:500}
+.set{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;padding-bottom:14px}
+.set label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mute)}
+.set button{align-self:end}
+input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 6px;width:100%;min-width:0;min-height:34px}
+.wrap{overflow-x:auto}
+table{width:100%;min-width:580px;border-collapse:collapse}
+th{font-weight:500;color:var(--mute);font-size:12px;text-align:left;padding:10px 6px;border-bottom:1px solid var(--line)}
+td{padding:4px 6px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{padding-left:14px}
+td.d{white-space:nowrap;width:64px}td.d b{font-size:16px;margin-right:2px}
+td.t{text-align:right;font-weight:700;width:64px;padding-right:10px}td.z{color:var(--mute);font-weight:400}
+td.x{width:34px;padding:0 6px 0 0}
+td.x button{border:0;background:none;color:var(--mute);padding:0;min-height:30px;width:28px}
+tr.we,tr.hol{background:var(--we)}tr.we td.d{color:var(--mute)}tr.hol td.d,tr.hol td.d b{color:var(--hol)}.hn{display:block;font-size:11px;font-weight:500;line-height:1.2;margin-top:1px}
+tr.today td.d b{color:var(--acc);text-decoration:underline;text-underline-offset:4px}
+tr.wk td{background:var(--wk);border-bottom:1px solid var(--line);font-weight:700;padding:8px 6px}
+tr.wk td:first-child{border-left:4px solid var(--acc);padding-left:10px}
+.note{font-weight:400;color:var(--mute);margin-left:8px;font-size:13px}.note.over{color:var(--over);font-weight:700}
+.du{display:flex;align-items:center;gap:2px}.du input{width:38px;padding:5px 2px;text-align:center}.du span{color:var(--mute)}
+input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.hint{color:var(--mute);font-size:12px;margin:0}.srow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.auth{padding:18px 20px;display:flex;flex-direction:column;gap:10px;max-width:420px;margin:0 auto}.auth h2{margin:0;font-size:18px}
+.auth form{display:flex;flex-direction:column;gap:10px}
+.auth label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mute)}.auth p{margin:0}#lMsg,#sMsg{font-size:13px;min-height:1.4em}
+.auth label.chk{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--ink)}.auth label.chk input{width:auto;min-height:0}
+#who{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mute)}#st{min-width:60px}
+.foot{color:var(--mute);font-size:12px;margin:12px 4px 0}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<main>
+<header>
+  <h1>근무시간 계산기</h1>
+  <div class="nav" id="nav" hidden>
+    <button id="prev" aria-label="이전 달">‹</button>
+    <span id="ttl"></span>
+    <button id="next" aria-label="다음 달">›</button>
+    <button id="today">오늘</button>
+  </div>
+</header>
+
+<div id="who" hidden><span id="whoTxt"></span><span id="st"></span><button id="out">로그아웃</button></div>
+<section class="card auth" id="authLogin">
+  <h2>로그인</h2>
+  <form id="loginForm">
+    <label>이메일<input id="lMail" type="email" autocomplete="email"></label>
+    <label>비밀번호<input id="lPw" type="password" autocomplete="current-password"></label>
+    <label class="chk"><input type="checkbox" id="rememberId"> 아이디 저장</label>
+    <label class="chk"><input type="checkbox" id="autoLogin" checked> 자동 로그인</label>
+    <div class="srow"><button class="pri" type="submit" id="aIn">로그인</button><button type="button" id="goSignup">가입하기</button><button type="button" id="aReset">비밀번호 재설정</button></div>
+  </form>
+  <p id="lMsg" role="status"></p>
+  <p class="hint">기록은 로그인한 본인만 볼 수 있어요.</p>
+</section>
+<section class="card auth" id="authSignup" hidden>
+  <h2>가입하기</h2>
+  <label>이름<input id="sName" autocomplete="name"></label>
+  <label>이메일<input id="sMail" type="email" autocomplete="email"></label>
+  <label>비밀번호 (6자 이상)<input id="sPw" type="password" autocomplete="new-password"></label>
+  <div class="srow"><button class="pri" id="aUp">가입하기</button><button id="goLogin">로그인으로 돌아가기</button></div>
+  <p id="sMsg" role="status"></p>
+  <p class="hint">가입하면 이름, 이메일, 근무 기록이 서비스에 저장됩니다.</p>
+</section>
+<div id="app" hidden>
+<section class="sum card">
+  <div class="top">
+    <div><div class="lab">월 합계</div><div class="big" id="mTot">0시간</div><div class="dec" id="mDec"></div></div>
+    <div id="live" hidden><div class="lab">오늘 근무 중</div><div class="big live" id="liveT">00:00:00</div><div class="dec" id="liveS"></div></div>
+  </div>
+  <dl>
+    <div><dt>근무일</dt><dd id="sDays">–</dd></div>
+    <div><dt>하루 평균</dt><dd id="sAvg">–</dd></div>
+    <div><dt>주 평균</dt><dd id="sWk">–</dd></div>
+    <div><dt>휴일 근무</dt><dd id="sOff">–</dd></div>
+  </dl>
+</section>
+
+<details class="card">
+  <summary>기본값 설정</summary>
+  <div class="set">
+    <label>출근<input type="time" id="sStart"></label>
+    <label>퇴근<input type="time" id="sEnd"></label>
+    <label>기본 휴게(시:분)<div class="du"><input type="number" id="sBrkH" min="0" max="24" aria-label="기본 휴게 시간"><span>:</span><input type="number" id="sBrkM" min="0" max="59" aria-label="기본 휴게 분"></div></label>
+    <label>주 기준(시간)<input type="number" id="sTgt" min="0" step="1"></label>
+    <label>휴게 자동 차감 기준(시간)<input type="number" id="sAfter" min="0" step="0.5"></label>
+    <button class="pri" id="fill">평일 빈칸 채우기</button>
+    <button id="wipe">기록 전체 삭제</button>
+  </div>
+</details>
+
+<section class="card wrap">
+  <table>
+    <thead><tr><th>날짜</th><th>출근</th><th>퇴근</th><th>휴게(시:분)</th><th>인정(시:분)</th><th style="text-align:right;padding-right:10px">근무시간</th><th></th></tr></thead>
+    <tbody id="tb"></tbody>
+  </table>
+</section>
+<p class="foot">출근·퇴근 시각을 넣으면 휴게시간을 뺀 근무시간이 자동 계산됩니다. 퇴근이 출근보다 이르면 다음 날 퇴근(야간근무)으로 봅니다. 휴게(시:분)를 비워두면 근무시간이 기준(기본 4시간) 이상일 때 기본 휴게시간이 자동으로 빠집니다. 오늘 출근 시각만 넣고 퇴근을 비워두면 월 합계 옆에서 근무시간이 초 단위로 올라갑니다. 인정은 연차·반차·출장·교육처럼 출퇴근 기록 없이 근무로 인정되는 시간이며, 넣으면 그날 근무시간에 더해집니다. 입력한 내용은 로그인한 본인 계정에 저장되어 다른 기기에서도 볼 수 있습니다. 공휴일(대체공휴일 포함)은 빨간 날짜로 표시되며 평일 채우기에서 빠지고, 주 기준시간도 평일 공휴일 하루당 하루치(기준÷5)만큼 줄어듭니다. 휴일 근무는 주말·공휴일에 입력한 시간의 합계입니다. <span id="hnote"></span></p>
+</div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const state={data:{},set:{start:'09:00',end:'18:00',brk:60,target:40,after:4}};
+let uid=null,saveT=null,pending=false;
+const setSt=t=>{$('st').textContent=t;};
+const save=()=>{if(!sb||!uid)return;pending=true;clearTimeout(saveT);setSt('저장 중…');saveT=setTimeout(pushNow,800);};
+const pad=n=>String(n).padStart(2,'0');
+const keyOf=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
+const tm=s=>{const [h,m]=s.split(':').map(Number);return h*60+m;};
+function clock(r){
+  if(!r||!r.s||!r.e)return 0;
+  let m=tm(r.e)-tm(r.s);if(m<0)m+=1440;
+  const b=(r.b===''||r.b==null)?(m>=state.set.after*60?Number(state.set.brk):0):Number(r.b);
+  return Math.max(0,m-(b||0));
+}
+function cred(r){const a=Number(r&&r.a);return a>0?a:0;}
+function mins(r){return clock(r)+cred(r);}
+const hv=(v,i)=>(v===''||v==null)?'':(i?v%60:Math.floor(v/60));
+const fmt=m=>`${Math.floor(m/60)}:${pad(m%60)}`;
+const fmtK=m=>{const h=Math.floor(m/60),mm=m%60;return mm?`${h}시간 ${mm}분`:`${h}시간`;};
+const now=new Date();
+let cur=new Date(now.getFullYear(),now.getMonth(),1);
+let weeks=[];
+const HOL={
+'2026-01-01':'신정','2026-02-16':'설날 연휴','2026-02-17':'설날','2026-02-18':'설날 연휴','2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-01':'노동절','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거일','2026-06-06':'현충일','2026-07-17':'제헌절','2026-08-15':'광복절','2026-08-17':'대체공휴일','2026-09-24':'추석 연휴','2026-09-25':'추석','2026-09-26':'추석 연휴','2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
+'2027-01-01':'신정','2027-02-06':'설날 연휴','2027-02-07':'설날','2027-02-08':'설날 연휴','2027-02-09':'대체공휴일','2027-03-01':'삼일절','2027-05-01':'노동절','2027-05-03':'대체공휴일','2027-05-05':'어린이날','2027-05-13':'부처님오신날','2027-06-06':'현충일','2027-07-17':'제헌절','2027-07-19':'대체공휴일','2027-08-15':'광복절','2027-08-16':'대체공휴일','2027-09-14':'추석 연휴','2027-09-15':'추석','2027-09-16':'추석 연휴','2027-10-03':'개천절','2027-10-04':'대체공휴일','2027-10-09':'한글날','2027-10-11':'대체공휴일','2027-12-25':'성탄절','2027-12-27':'대체공휴일'};
+
+function render(){
+  const y=cur.getFullYear(),m=cur.getMonth(),n=new Date(y,m+1,0).getDate();
+  $('ttl').textContent=`${y}년 ${m+1}월`;
+  $('hnote').textContent=(y<2026||y>2027)?'이 해의 공휴일 정보는 아직 반영되지 않았습니다.':'';
+  const tb=$('tb');tb.innerHTML='';weeks=[];let w=null;
+  for(let i=1;i<=n;i++){
+    const dow=new Date(y,m,i).getDay(),k=keyOf(y,m,i),r=state.data[k]||{};
+    if(!w||dow===1){w={rows:[],first:i,hd:0};weeks.push(w);}
+    const tr=document.createElement('tr');tr.dataset.k=k;
+    const hn=HOL[k],off=dow===0||dow===6||!!hn;
+    if(hn&&dow>0&&dow<6)w.hd++;
+    tr.className=(dow===0||dow===6?'we':'')+(hn?' hol':'');
+    if(y===now.getFullYear()&&m===now.getMonth()&&i===now.getDate())tr.classList.add('today');
+    tr.innerHTML=`<td class="d"><b>${i}</b>${'일월화수목금토'[dow]}${hn?`<small class="hn">${hn}</small>`:''}</td>
+<td><input type="time" data-f="s" value="${r.s||''}" aria-label="${i}일 출근"></td>
+<td><input type="time" data-f="e" value="${r.e||''}" aria-label="${i}일 퇴근"></td>
+<td><div class="du" data-f="b"><input type="number" class="dh" min="0" max="24" placeholder="${Math.floor(state.set.brk/60)}" value="${hv(r.b,0)}" aria-label="${i}일 휴게 시간"><span>:</span><input type="number" class="dm" min="0" max="59" placeholder="${pad(state.set.brk%60)}" value="${hv(r.b,1)}" aria-label="${i}일 휴게 분"></div></td>
+<td><div class="du" data-f="a"><input type="number" class="dh" min="0" max="24" placeholder="0" value="${hv(r.a,0)}" aria-label="${i}일 인정 시간"><span>:</span><input type="number" class="dm" min="0" max="59" placeholder="00" value="${hv(r.a,1)}" aria-label="${i}일 인정 분"></div></td>
+<td class="t"></td>
+<td class="x"><button data-clear aria-label="${i}일 지우기">×</button></td>`;
+    tb.appendChild(tr);
+    w.rows.push({k,off,td:tr.querySelector('.t')});
+    if(dow===0||i===n){
+      const s=document.createElement('tr');s.className='wk';
+      s.innerHTML=`<td colspan="5">${m+1}/${w.first}–${i} 주간<span class="note"></span></td><td class="t"></td><td></td>`;
+      tb.appendChild(s);w.tot=s.querySelector('.t');w.note=s.querySelector('.note');
+    }
+  }
+  recalc();
+}
+
+function recalc(){
+  let tot=0,days=0,wn=0,off=0,cr=0;
+  weeks.forEach(w=>{
+    let s=0;
+    w.rows.forEach(o=>{
+      const v=mins(state.data[o.k]);
+      o.td.textContent=v?fmt(v):'–';o.td.classList.toggle('z',!v);
+      s+=v;if(v)days++;if(o.off)off+=v;cr+=cred(state.data[o.k]);
+    });
+    tot+=s;if(s)wn++;
+    w.tot.textContent=s?fmt(s):'–';
+    if(w.rows.length===7&&s&&state.set.target>0){
+      const T=Math.round(state.set.target*60*(1-w.hd/5)),d=s-T;
+      w.note.textContent=`기준 ${fmtK(T)}${w.hd?` (공휴일 ${w.hd}일 제외)`:''} ${d>=0?'+':'−'}${fmt(Math.abs(d))}`;
+      w.note.className=d>0?'note over':'note';
+    }else{w.note.textContent='';w.note.className='note';}
+  });
+  $('mTot').textContent=fmtK(tot);
+  $('mDec').textContent=`${(tot/60).toFixed(1)}시간${cr?` (출퇴근 ${fmtK(tot-cr)} + 인정 ${fmtK(cr)})`:''}`;
+  $('sDays').textContent=days?`${days}일`:'–';
+  $('sAvg').textContent=days?fmtK(Math.round(tot/days)):'–';
+  $('sWk').textContent=wn?fmtK(Math.round(tot/wn)):'–';
+  $('sOff').textContent=off?fmtK(off):'–';
+}
+
+$('tb').addEventListener('input',e=>{
+  const t=e.target,tr=t.closest('tr');
+  const du=t.closest('.du');
+  if(!tr||!tr.dataset.k||(!du&&!t.dataset.f))return;
+  const k=tr.dataset.k,r=state.data[k]||(state.data[k]={});
+  if(du){
+    const h=du.querySelector('.dh').value,mi=du.querySelector('.dm').value;
+    r[du.dataset.f]=(h===''&&mi==='')?'':Math.max(0,(+h||0)*60+(+mi||0));
+  }else r[t.dataset.f]=t.value;
+  const nb=v=>v===''||v==null;
+  if(!r.s&&!r.e&&nb(r.b)&&nb(r.a))delete state.data[k];
+  save();recalc();
+});
+$('tb').addEventListener('click',e=>{
+  const b=e.target.closest('[data-clear]');if(!b)return;
+  const tr=b.closest('tr');delete state.data[tr.dataset.k];
+  tr.querySelectorAll('input').forEach(i=>i.value='');
+  save();recalc();
+});
+$('prev').onclick=()=>{cur=new Date(cur.getFullYear(),cur.getMonth()-1,1);render();};
+$('next').onclick=()=>{cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);render();};
+$('today').onclick=()=>{cur=new Date(now.getFullYear(),now.getMonth(),1);render();};
+
+const S={sStart:'start',sEnd:'end',sTgt:'target',sAfter:'after'};
+Object.entries(S).forEach(([id,f])=>{
+  $(id).value=state.set[f];
+  $(id).addEventListener('change',e=>{
+    const v=e.target.value;
+    state.set[f]=(f==='after'||f==='target')?(Number(v)||0):v;
+    save();render();
+  });
+});
+const bh=$('sBrkH'),bm=$('sBrkM');
+bh.value=Math.floor(state.set.brk/60);bm.value=state.set.brk%60;
+[bh,bm].forEach(el=>el.addEventListener('change',()=>{state.set.brk=(+bh.value||0)*60+(+bm.value||0);save();render();}));
+$('fill').onclick=()=>{
+  const y=cur.getFullYear(),m=cur.getMonth(),n=new Date(y,m+1,0).getDate();
+  if(!state.set.start||!state.set.end)return;
+  for(let i=1;i<=n;i++){
+    const dow=new Date(y,m,i).getDay(),k=keyOf(y,m,i);
+    if(dow>0&&dow<6&&!HOL[k]&&!(state.data[k]&&(state.data[k].s||state.data[k].e||state.data[k].a>0)))
+      state.data[k]=Object.assign(state.data[k]||{},{s:state.set.start,e:state.set.end});
+  }
+  save();render();
+};
+const hms=t=>{t=Math.max(0,Math.floor(t));return pad(Math.floor(t/3600))+':'+pad(Math.floor(t%3600/60))+':'+pad(t%60);};
+function tick(){
+  const box=$('live'),n=new Date(),r=state.data[keyOf(n.getFullYear(),n.getMonth(),n.getDate())];
+  if(!r||!r.s||r.e){box.hidden=true;return;}
+  const sp=r.s.split(':').map(Number);
+  const raw=Math.max(0,Math.floor((n-new Date(n.getFullYear(),n.getMonth(),n.getDate(),sp[0],sp[1],0))/1000));
+  const b=(r.b===''||r.b==null)?(raw>=state.set.after*3600?state.set.brk*60:0):Number(r.b)*60;
+  box.hidden=false;
+  $('liveT').textContent=hms(raw-b);
+  $('liveS').textContent='출근 '+r.s+' · 경과 '+hms(raw)+(b?' · 휴게 −'+fmt(b/60):'');
+}
+tick();setInterval(tick,1000);
+const SUPABASE_URL='https://tscwbmpbukymtjyqbcvb.supabase.co';
+const SUPABASE_KEY='sb_publishable_RvYkl0tNXVamUELabc-JDQ_zAGXS5Zk';
+const AUTH_STORAGE_KEY='wt-auth-token';
+const sb=(window.supabase&&SUPABASE_URL.indexOf('https://')===0)?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{storageKey:AUTH_STORAGE_KEY}}):null;
+async function pushNow(){
+  pending=false;
+  try{
+    const r=await sb.from('user_data').upsert({user_id:uid,data:state,updated_at:new Date().toISOString()});
+    setSt(r.error?'저장 실패':'저장됨');
+  }catch(e){setSt('저장 실패');}
+}
+async function enter(session){
+  uid=session.user.id;
+  const md=session.user.user_metadata||{};
+  $('whoTxt').textContent=(md.name||session.user.email)+' · 고유번호 '+uid.slice(0,8);
+  $('authLogin').hidden=true;$('authSignup').hidden=true;$('app').hidden=false;$('who').hidden=false;$('nav').hidden=false;
+  const r=await sb.from('user_data').select('data').eq('user_id',uid).maybeSingle();
+  if(r.error){setSt('불러오기 실패');return;}
+  if(r.data&&r.data.data){state.data=r.data.data.data||{};Object.assign(state.set,r.data.data.set||{});setSt('');}
+  else await pushNow();
+  $('sStart').value=state.set.start;$('sEnd').value=state.set.end;$('sTgt').value=state.set.target;$('sAfter').value=state.set.after;
+  $('sBrkH').value=Math.floor(state.set.brk/60);$('sBrkM').value=state.set.brk%60;
+  render();
+}
+const sayL=t=>{$('lMsg').textContent=t;};
+const saySign=t=>{$('sMsg').textContent=t;};
+const errK=m=>/invalid login/i.test(m)?'이메일 또는 비밀번호가 맞지 않아요.':/already|registered/i.test(m)?'이미 가입된 이메일이에요. 로그인해 주세요.':/at least|weak/i.test(m)?'비밀번호를 6자 이상으로 입력해 주세요.':/confirm/i.test(m)?'이메일 확인이 필요해요. 받은 메일의 링크를 눌러 주세요.':/rate|limit/i.test(m)?'요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.':'처리하지 못했어요: '+m;
+const cred2=()=>({email:$('lMail').value.trim(),password:$('lPw').value});
+const showLogin=()=>{$('authSignup').hidden=true;$('authLogin').hidden=false;};
+const showSignup=()=>{$('authLogin').hidden=true;$('authSignup').hidden=false;sayL('');saySign('');};
+$('goSignup').onclick=()=>showSignup();
+$('goLogin').onclick=()=>{showLogin();saySign('');};
+let suppressEnter=false;
+const savedEmail=localStorage.getItem('savedEmail');
+if(savedEmail){$('lMail').value=savedEmail;$('rememberId').checked=true;}
+$('autoLogin').checked=localStorage.getItem('autoLoginOff')!=='1';
+$('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!sb)return;
+  const remember=$('rememberId').checked,auto=$('autoLogin').checked,c=cred2();
+  if(remember)localStorage.setItem('savedEmail',c.email);else localStorage.removeItem('savedEmail');
+  localStorage.setItem('autoLoginOff',auto?'0':'1');
+  sayL('로그인 중…');
+  const r=await sb.auth.signInWithPassword(c);
+  if(r.error){sayL(errK(r.error.message));return;}
+  sayL('');
+  if(!auto){try{localStorage.removeItem(AUTH_STORAGE_KEY);}catch(err){}}
+});
+if(!sb){
+  sayL('설정이 필요해요. 이 파일 위쪽의 SUPABASE_URL과 SUPABASE_KEY를 입력해 주세요.');
+  ['aIn','aUp','aReset'].forEach(i=>$(i).disabled=true);
+}else{
+  $('aUp').onclick=async()=>{
+    const name=$('sName').value.trim();if(!name){saySign('이름을 입력해 주세요.');return;}
+    const email=$('sMail').value.trim(),password=$('sPw').value;
+    saySign('가입 중…');
+    suppressEnter=true;
+    const r=await sb.auth.signUp({email,password,options:{data:{name}}});
+    if(r.error){suppressEnter=false;saySign(errK(r.error.message));return;}
+    if(r.data.session)await sb.auth.signOut();
+    suppressEnter=false;
+    $('sName').value='';$('sPw').value='';
+    $('lMail').value=email;$('lPw').value='';
+    showLogin();
+    sayL(r.data.session?'가입이 완료되었습니다. 로그인해 주세요.':'확인 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해 주세요.');
+  };
+  $('aReset').onclick=async()=>{
+    const em=$('lMail').value.trim();if(!em){sayL('이메일을 먼저 입력해 주세요.');return;}
+    const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});
+    sayL(r.error?errK(r.error.message):'재설정 메일을 보냈어요.');
+  };
+  $('out').onclick=async()=>{clearTimeout(saveT);if(pending)await pushNow();await sb.auth.signOut();location.reload();};
+  $('wipe').onclick=()=>{if(confirm('내 근무 기록을 모두 삭제할까요? 되돌릴 수 없어요.')){state.data={};save();render();}};
+  sb.auth.onAuthStateChange((ev,session)=>{
+    if(ev==='PASSWORD_RECOVERY')setTimeout(()=>{const p=prompt('새 비밀번호를 입력하세요 (6자 이상)');if(p)sb.auth.updateUser({password:p}).then(r=>alert(r.error?'비밀번호를 바꾸지 못했어요.':'비밀번호를 바꿨어요.'));},0);
+    if(session&&!uid&&!suppressEnter)setTimeout(()=>enter(session),0);
+  });
+}
+render();
+</script>
+</body>
+</html>
