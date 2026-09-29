@@ -344,7 +344,9 @@ async function enter(session){
 const sayL=t=>{$('lMsg').textContent=t;};
 const saySign=t=>{$('sMsg').textContent=t;};
 const errK=m=>/invalid login/i.test(m)?'이메일 또는 비밀번호가 맞지 않아요.':/already|registered/i.test(m)?'이미 가입된 이메일이에요. 로그인해 주세요.':/at least|weak/i.test(m)?'비밀번호를 6자 이상으로 입력해 주세요.':/confirm/i.test(m)?'이메일 확인이 필요해요. 받은 메일의 링크를 눌러 주세요.':/rate|limit/i.test(m)?'요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.':'처리하지 못했어요: '+m;
-const cred2=()=>({email:$('lMail').value.trim(),password:$('lPw').value});
+const toEmail=v=>{v=v.trim();return v.includes('@')?v:v.toLowerCase()+'@wtid.app';};
+const okId=v=>{v=v.trim();return v.includes('@')||/^[A-Za-z0-9_.-]{4,30}$/.test(v);};
+const cred2=()=>({email:toEmail($('lMail').value),password:$('lPw').value});
 const showLogin=()=>{$('authSignup').hidden=true;$('authLogin').hidden=false;};
 const showSignup=()=>{$('authLogin').hidden=true;$('authSignup').hidden=false;sayL('');saySign('');};
 $('goSignup').onclick=()=>showSignup();
@@ -370,23 +372,38 @@ if(!sb){
   ['aIn','aUp','aReset'].forEach(i=>$(i).disabled=true);
 }else{
   $('aUp').onclick=async()=>{
-    const name=$('sName').value.trim();if(!name){saySign('이름을 입력해 주세요.');return;}
-    const email=$('sMail').value.trim(),password=$('sPw').value;
-    saySign('가입 중…');
-    suppressEnter=true;
-    const r=await sb.auth.signUp({email,password,options:{data:{name}}});
-    if(r.error){suppressEnter=false;saySign(errK(r.error.message));return;}
-    if(r.data.session)await sb.auth.signOut();
-    suppressEnter=false;
-    $('sName').value='';$('sPw').value='';
-    $('lMail').value=email;$('lPw').value='';
-    showLogin();
-    sayL(r.data.session?'가입이 완료되었습니다. 로그인해 주세요.':'확인 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해 주세요.');
+  const name=$('sName').value.trim(),raw=$('sMail').value.trim(),password=$('sPw').value;
+  if(!name){saySign('이름을 입력해 주세요.');return;}
+  if(!raw||!okId(raw)){saySign('이메일 또는 아이디(영문·숫자 4자 이상)를 입력해 주세요.');return;}
+  if(password.length<6){saySign('비밀번호를 6자 이상으로 입력해 주세요.');return;}
+  saySign('가입 중…');
+  const r=await sb.auth.signUp({email:toEmail(raw),password,options:{data:{name}}});
+  if(r.error){saySign(errK(r.error.message));return;}
+  if(!r.data.session){saySign('가입은 됐지만 로그인되지 않았어요. Supabase의 이메일 인증 설정(Confirm email)이 꺼져 있는지 확인해 주세요.');return;}
+  $('lMail').value=raw;saySign('');
   };
   $('aReset').onclick=async()=>{
-    const em=$('lMail').value.trim();if(!em){sayL('이메일을 먼저 입력해 주세요.');return;}
-    const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});
-    sayL(r.error?errK(r.error.message):'재설정 메일을 보냈어요.');
+  const raw=$('lMail').value.trim();if(!raw){sayL('이메일을 먼저 입력해 주세요.');return;}
+  if(!raw.includes('@')){sayL('아이디 계정은 재설정 메일을 받을 수 없어요.');return;}
+  const r=await sb.auth.resetPasswordForEmail(raw,{redirectTo:location.origin+location.pathname});
+  sayL(r.error?errK(r.error.message):'재설정 메일을 보냈어요.');
+  };
+  $('aDel').onclick=async()=>{
+  const c=cred2();
+  if(!$('lMail').value.trim()||!c.password){sayL('삭제할 계정의 이메일(아이디)과 비밀번호를 입력해 주세요.');return;}
+  if(!confirm('계정과 모든 근무 기록이 영구 삭제됩니다. 되돌릴 수 없어요. 삭제할까요?'))return;
+  sayL('삭제 중…');
+  suppressEnter=true;
+  try{
+    const r=await sb.auth.signInWithPassword(c);
+    if(r.error){sayL(errK(r.error.message));return;}
+    const d=await sb.rpc('delete_my_account');
+    if(d.error){sayL('삭제하지 못했어요: '+d.error.message);await sb.auth.signOut({scope:'local'});return;}
+    await sb.auth.signOut({scope:'local'});
+    localStorage.removeItem('savedEmail');
+    $('lMail').value='';$('lPw').value='';$('rememberId').checked=false;
+    sayL('계정이 삭제되었습니다.');
+  }finally{suppressEnter=false;}
   };
   $('out').onclick=async()=>{clearTimeout(saveT);if(pending)await pushNow();await sb.auth.signOut();location.reload();};
   $('wipe').onclick=()=>{if(confirm('내 근무 기록을 모두 삭제할까요? 되돌릴 수 없어요.')){state.data={};save();render();}};
