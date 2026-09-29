@@ -24,7 +24,9 @@ h1{margin:0;font-size:22px;font-weight:900}
 #ttl{min-width:96px;text-align:center;font-weight:700;font-size:17px}
 button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 12px;min-height:36px}
 button:hover{border-color:var(--acc)}
+button:disabled{opacity:.5;cursor:default}
 button.pri{background:var(--acc);color:var(--on);border-color:var(--acc);font-weight:700}
+button.dng{color:var(--hol)}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px}
 .sum{padding:18px 20px;margin-bottom:12px}
@@ -63,7 +65,7 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 .hint{color:var(--mute);font-size:12px;margin:0}.srow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .auth{padding:18px 20px;display:flex;flex-direction:column;gap:10px;max-width:420px;margin:0 auto}.auth h2{margin:0;font-size:18px}
 .auth form{display:flex;flex-direction:column;gap:10px}
-.auth label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mute)}.auth p{margin:0}#lMsg,#sMsg{font-size:13px;min-height:1.4em}
+.auth label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mute)}.auth p{margin:0}#lMsg,#sMsg,#cMsg{font-size:13px;min-height:1.4em}
 .auth label.chk{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--ink)}.auth label.chk input{width:auto;min-height:0}
 #who{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mute)}#st{min-width:60px}
 .foot{color:var(--mute);font-size:12px;margin:12px 4px 0}
@@ -83,27 +85,40 @@ input[type=number]{-moz-appearance:textfield}input[type=number]::-webkit-inner-s
 </header>
 
 <div id="who" hidden><span id="whoTxt"></span><span id="st"></span><button id="out">로그아웃</button></div>
+
 <section class="card auth" id="authLogin">
   <h2>로그인</h2>
   <form id="loginForm">
-    <label>이메일<input id="lMail" type="email" autocomplete="email"></label>
+    <label>아이디<input id="lMail" type="text" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
     <label>비밀번호<input id="lPw" type="password" autocomplete="current-password"></label>
     <label class="chk"><input type="checkbox" id="rememberId"> 아이디 저장</label>
     <label class="chk"><input type="checkbox" id="autoLogin" checked> 자동 로그인</label>
-    <div class="srow"><button class="pri" type="submit" id="aIn">로그인</button><button type="button" id="goSignup">가입하기</button><button type="button" id="aReset">비밀번호 재설정</button></div>
+    <div class="srow"><button class="pri" type="submit" id="aIn">로그인</button><button type="button" id="goSignup">가입하기</button></div>
+    <div class="srow"><button type="button" id="goChange">비밀번호 변경</button><button type="button" class="dng" id="aDel">계정 삭제</button></div>
   </form>
   <p id="lMsg" role="status"></p>
-  <p class="hint">기록은 로그인한 본인만 볼 수 있어요.</p>
+  <p class="hint">기록은 로그인한 본인만 볼 수 있어요. 계정을 삭제하려면 아이디와 비밀번호를 입력한 뒤 [계정 삭제]를 누르세요.</p>
 </section>
+
 <section class="card auth" id="authSignup" hidden>
   <h2>가입하기</h2>
   <label>이름<input id="sName" autocomplete="name"></label>
-  <label>이메일<input id="sMail" type="email" autocomplete="email"></label>
+  <label>아이디 (영문·숫자·_ . - 4~30자)<input id="sMail" type="text" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
   <label>비밀번호 (6자 이상)<input id="sPw" type="password" autocomplete="new-password"></label>
   <div class="srow"><button class="pri" id="aUp">가입하기</button><button id="goLogin">로그인으로 돌아가기</button></div>
   <p id="sMsg" role="status"></p>
-  <p class="hint">가입하면 이름, 이메일, 근무 기록이 서비스에 저장됩니다.</p>
+  <p class="hint">이메일 없이 아이디와 비밀번호만으로 바로 가입돼요. 비밀번호를 잊으면 복구할 수 없으니 꼭 기억해 두세요. 가입하면 이름, 아이디, 근무 기록이 서비스에 저장됩니다.</p>
 </section>
+
+<section class="card auth" id="authChange" hidden>
+  <h2>비밀번호 변경</h2>
+  <label>아이디<input id="cMail" type="text" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+  <label>현재 비밀번호<input id="cPw" type="password" autocomplete="current-password"></label>
+  <label>새 비밀번호 (6자 이상)<input id="cNew" type="password" autocomplete="new-password"></label>
+  <div class="srow"><button class="pri" id="aChg">비밀번호 바꾸기</button><button id="cBack">로그인으로 돌아가기</button></div>
+  <p id="cMsg" role="status"></p>
+</section>
+
 <div id="app" hidden>
 <section class="sum card">
   <div class="top">
@@ -317,6 +332,7 @@ function tick(){
   $('liveS').textContent='출근 '+r.s+' · 경과 '+hms(raw)+(b?' · 휴게 −'+fmt(b/60):'');
 }
 tick();setInterval(tick,1000);
+
 const SUPABASE_URL='https://tscwbmpbukymtjyqbcvb.supabase.co';
 const SUPABASE_KEY='sb_publishable_RvYkl0tNXVamUELabc-JDQ_zAGXS5Zk';
 const AUTH_STORAGE_KEY='wt-auth-token';
@@ -328,11 +344,12 @@ async function pushNow(){
     setSt(r.error?'저장 실패':'저장됨');
   }catch(e){setSt('저장 실패');}
 }
+const showOnly=id=>{['authLogin','authSignup','authChange'].forEach(s=>{$(s).hidden=(s!==id);});};
 async function enter(session){
   uid=session.user.id;
   const md=session.user.user_metadata||{};
-  $('whoTxt').textContent=(md.name||session.user.email)+' · 고유번호 '+uid.slice(0,8);
-  $('authLogin').hidden=true;$('authSignup').hidden=true;$('app').hidden=false;$('who').hidden=false;$('nav').hidden=false;
+  $('whoTxt').textContent=(md.name||(session.user.email||'').replace(ID_DOMAIN,''))+' · 고유번호 '+uid.slice(0,8);
+  showOnly('');$('app').hidden=false;$('who').hidden=false;$('nav').hidden=false;
   const r=await sb.from('user_data').select('data').eq('user_id',uid).maybeSingle();
   if(r.error){setSt('불러오기 실패');return;}
   if(r.data&&r.data.data){state.data=r.data.data.data||{};Object.assign(state.set,r.data.data.set||{});setSt('');}
@@ -343,12 +360,17 @@ async function enter(session){
 }
 const sayL=t=>{$('lMsg').textContent=t;};
 const saySign=t=>{$('sMsg').textContent=t;};
-const errK=m=>/invalid login/i.test(m)?'이메일 또는 비밀번호가 맞지 않아요.':/already|registered/i.test(m)?'이미 가입된 이메일이에요. 로그인해 주세요.':/at least|weak/i.test(m)?'비밀번호를 6자 이상으로 입력해 주세요.':/confirm/i.test(m)?'이메일 확인이 필요해요. 받은 메일의 링크를 눌러 주세요.':/rate|limit/i.test(m)?'요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.':'처리하지 못했어요: '+m;
-const cred2=()=>({email:$('lMail').value.trim(),password:$('lPw').value});
-const showLogin=()=>{$('authSignup').hidden=true;$('authLogin').hidden=false;};
-const showSignup=()=>{$('authLogin').hidden=true;$('authSignup').hidden=false;sayL('');saySign('');};
-$('goSignup').onclick=()=>showSignup();
+const sayC=t=>{$('cMsg').textContent=t;};
+const errK=m=>/invalid login/i.test(m)?'아이디 또는 비밀번호가 맞지 않아요.':/already|registered/i.test(m)?'이미 사용 중인 아이디예요.':/at least|weak/i.test(m)?'비밀번호를 6자 이상으로 입력해 주세요.':/same/i.test(m)?'현재 비밀번호와 다른 비밀번호를 입력해 주세요.':/rate|limit/i.test(m)?'요청이 너무 많아요. 잠시 뒤 다시 시도해 주세요.':/invalid|email/i.test(m)?'아이디 형식이 올바르지 않아요.':'처리하지 못했어요: '+m;
+const ID_DOMAIN='@wtid.app';
+const toEmail=v=>v.trim().toLowerCase()+ID_DOMAIN;
+const okId=v=>/^[A-Za-z0-9_.-]{4,30}$/.test(v.trim());
+const cred2=()=>({email:toEmail($('lMail').value),password:$('lPw').value});
+const showLogin=()=>showOnly('authLogin');
+$('goSignup').onclick=()=>{showOnly('authSignup');sayL('');saySign('');};
 $('goLogin').onclick=()=>{showLogin();saySign('');};
+$('goChange').onclick=()=>{$('cMail').value=$('lMail').value;$('cPw').value='';$('cNew').value='';showOnly('authChange');sayL('');sayC('');};
+$('cBack').onclick=()=>{showLogin();sayC('');};
 let suppressEnter=false;
 const savedEmail=localStorage.getItem('savedEmail');
 if(savedEmail){$('lMail').value=savedEmail;$('rememberId').checked=true;}
@@ -356,8 +378,11 @@ $('autoLogin').checked=localStorage.getItem('autoLoginOff')!=='1';
 $('loginForm').addEventListener('submit',async e=>{
   e.preventDefault();
   if(!sb)return;
-  const remember=$('rememberId').checked,auto=$('autoLogin').checked,c=cred2();
-  if(remember)localStorage.setItem('savedEmail',c.email);else localStorage.removeItem('savedEmail');
+  const remember=$('rememberId').checked,auto=$('autoLogin').checked;
+  if(!okId($('lMail').value)){sayL('아이디는 영문·숫자·_ . - 4~30자예요.');return;}
+  if(!$('lPw').value){sayL('비밀번호를 입력해 주세요.');return;}
+  const c=cred2();
+  if(remember)localStorage.setItem('savedEmail',$('lMail').value.trim());else localStorage.removeItem('savedEmail');
   localStorage.setItem('autoLoginOff',auto?'0':'1');
   sayL('로그인 중…');
   const r=await sb.auth.signInWithPassword(c);
@@ -366,32 +391,68 @@ $('loginForm').addEventListener('submit',async e=>{
   if(!auto){try{localStorage.removeItem(AUTH_STORAGE_KEY);}catch(err){}}
 });
 if(!sb){
-  sayL('설정이 필요해요. 이 파일 위쪽의 SUPABASE_URL과 SUPABASE_KEY를 입력해 주세요.');
-  ['aIn','aUp','aReset'].forEach(i=>$(i).disabled=true);
+  sayL('서버에 연결하지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.');
+  ['aIn','aUp','aChg','aDel'].forEach(i=>{$(i).disabled=true;});
 }else{
   $('aUp').onclick=async()=>{
     const name=$('sName').value.trim();if(!name){saySign('이름을 입력해 주세요.');return;}
-    const email=$('sMail').value.trim(),password=$('sPw').value;
+    const raw=$('sMail').value.trim(),password=$('sPw').value;
+    if(!okId(raw)){saySign('아이디는 영문·숫자·_ . - 4~30자로 입력해 주세요.');return;}
+    if(password.length<6){saySign('비밀번호를 6자 이상으로 입력해 주세요.');return;}
     saySign('가입 중…');
     suppressEnter=true;
-    const r=await sb.auth.signUp({email,password,options:{data:{name}}});
-    if(r.error){suppressEnter=false;saySign(errK(r.error.message));return;}
-    if(r.data.session)await sb.auth.signOut();
-    suppressEnter=false;
-    $('sName').value='';$('sPw').value='';
-    $('lMail').value=email;$('lPw').value='';
-    showLogin();
-    sayL(r.data.session?'가입이 완료되었습니다. 로그인해 주세요.':'확인 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해 주세요.');
+    try{
+      const r=await sb.auth.signUp({email:toEmail(raw),password,options:{data:{name}}});
+      if(r.error){saySign(errK(r.error.message));return;}
+      if(!r.data.session){saySign('Supabase의 이메일 인증(Confirm email) 설정이 아직 켜져 있어요. 끄고 다시 시도해 주세요.');return;}
+      await sb.auth.signOut({scope:'local'});
+      $('sName').value='';$('sMail').value='';$('sPw').value='';
+      $('lMail').value=raw;$('lPw').value='';
+      showLogin();
+      sayL('가입이 완료되었습니다. 로그인해 주세요.');
+    }catch(err){saySign('가입하지 못했어요: '+(err&&err.message||err));}
+    finally{suppressEnter=false;}
   };
-  $('aReset').onclick=async()=>{
-    const em=$('lMail').value.trim();if(!em){sayL('이메일을 먼저 입력해 주세요.');return;}
-    const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});
-    sayL(r.error?errK(r.error.message):'재설정 메일을 보냈어요.');
+  $('aChg').onclick=async()=>{
+    const id=$('cMail').value.trim(),oldPw=$('cPw').value,newPw=$('cNew').value;
+    if(!okId(id)||!oldPw){sayC('아이디와 현재 비밀번호를 입력해 주세요.');return;}
+    if(newPw.length<6){sayC('새 비밀번호를 6자 이상으로 입력해 주세요.');return;}
+    sayC('변경 중…');
+    suppressEnter=true;
+    try{
+      const r=await sb.auth.signInWithPassword({email:toEmail(id),password:oldPw});
+      if(r.error){sayC(errK(r.error.message));return;}
+      const u=await sb.auth.updateUser({password:newPw});
+      await sb.auth.signOut({scope:'local'});
+      if(u.error){sayC(errK(u.error.message));return;}
+      $('cPw').value='';$('cNew').value='';
+      $('lMail').value=id;$('lPw').value='';
+      showLogin();sayC('');
+      sayL('비밀번호를 바꿨어요. 새 비밀번호로 로그인해 주세요.');
+    }catch(err){sayC('변경하지 못했어요: '+(err&&err.message||err));}
+    finally{suppressEnter=false;}
+  };
+  $('aDel').onclick=async()=>{
+    const c=cred2();
+    if(!okId($('lMail').value)||!c.password){sayL('삭제할 계정의 아이디와 비밀번호를 입력해 주세요.');return;}
+    if(!confirm('계정과 모든 근무 기록이 영구 삭제됩니다. 되돌릴 수 없어요. 삭제할까요?'))return;
+    sayL('삭제 중…');
+    suppressEnter=true;
+    try{
+      const r=await sb.auth.signInWithPassword(c);
+      if(r.error){sayL(errK(r.error.message));return;}
+      const d=await sb.rpc('delete_my_account');
+      await sb.auth.signOut({scope:'local'});
+      if(d.error){sayL('삭제하지 못했어요. delete_account.sql을 Supabase에서 실행했는지 확인해 주세요.');return;}
+      localStorage.removeItem('savedEmail');
+      $('lMail').value='';$('lPw').value='';$('rememberId').checked=false;
+      sayL('계정이 삭제되었습니다.');
+    }catch(err){sayL('삭제하지 못했어요: '+(err&&err.message||err));}
+    finally{suppressEnter=false;}
   };
   $('out').onclick=async()=>{clearTimeout(saveT);if(pending)await pushNow();await sb.auth.signOut();location.reload();};
   $('wipe').onclick=()=>{if(confirm('내 근무 기록을 모두 삭제할까요? 되돌릴 수 없어요.')){state.data={};save();render();}};
   sb.auth.onAuthStateChange((ev,session)=>{
-    if(ev==='PASSWORD_RECOVERY')setTimeout(()=>{const p=prompt('새 비밀번호를 입력하세요 (6자 이상)');if(p)sb.auth.updateUser({password:p}).then(r=>alert(r.error?'비밀번호를 바꾸지 못했어요.':'비밀번호를 바꿨어요.'));},0);
     if(session&&!uid&&!suppressEnter)setTimeout(()=>enter(session),0);
   });
 }
